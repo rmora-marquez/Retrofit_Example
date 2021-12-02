@@ -49,6 +49,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendPost() {
+        String title = etTitle.getText().toString();
+        String body = etBody.getText().toString();
+        if(title.isEmpty() || body.isEmpty()){
+            Toast.makeText(this, "Title y Body son obligatorios", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://jsonplaceholder.typicode.com")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        PostService postService = retrofit.create(PostService.class);
+
+        Post nuevoPost = new Post();
+        nuevoPost.setBody(body);
+        nuevoPost.setTitle(title);
+        nuevoPost.setUserId(1);
+
+        Call<Post> call = postService.sendPost(nuevoPost);
+        call.enqueue(new Callback<Post>() {
+            @Override
+            public void onResponse(Call<Post> call, Response<Post> response) {
+                Post post = response.body();
+                Log.d(TAG, "onResponse: post" + post.toString());
+                titles.add(post.getTitle());
+                adapter.notifyDataSetChanged();
+                Toast.makeText(getApplicationContext(), "Nuevo post creado " + post.getTitle(),
+                        Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Call<Post> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Error en crear un nuevo post",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void getPost(){
@@ -76,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<Post>> call, Throwable t) {
                 //FALLO LA CONEXION O ALGO
-                Toast.makeText(null, "Error en recuperar datos del servidor",
+                Toast.makeText(getApplicationContext(), "Error en recuperar datos del servidor",
                         Toast.LENGTH_SHORT).show();
             }
         });
